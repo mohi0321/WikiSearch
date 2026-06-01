@@ -1,27 +1,28 @@
 package wikisearch.mohi.screen;
 
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.FormattedCharSequence;
 import wikisearch.mohi.network.WikiFetcher;
 import wikisearch.mohi.render.ImageLoader;
 
 import java.util.List;
 
 public class WikiBookScreen extends Screen {
-    private static final Identifier BOOK_TEXTURE = Identifier.of("minecraft", "textures/gui/book.png");
-    private TextFieldWidget searchField;
-    private ButtonWidget searchButton;
+    private static final ResourceLocation BOOK_TEXTURE = ResourceLocation.parse("minecraft:textures/gui/book.png");
+    private EditBox searchField;
+    private Button searchButton;
 
     private String currentPageText = "Enter a search term above.";
-    private Identifier currentImageId = null;
+    private ResourceLocation currentImageId = null;
     private boolean isLoading = false;
 
     public WikiBookScreen() {
-        super(Text.literal("Wiki Search"));
+        super(Component.literal("Wiki Search"));
     }
 
     @Override
@@ -31,13 +32,13 @@ public class WikiBookScreen extends Screen {
         int x = (this.width - bookWidth) / 2;
         int y = (this.height - 192) / 2;
 
-        this.searchField = new TextFieldWidget(this.textRenderer, x + 20, y + 20, 100, 20, Text.literal("Search..."));
-        this.addDrawableChild(this.searchField);
+        this.searchField = new EditBox(this.font, x + 20, y + 20, 100, 20, Component.literal("Search..."));
+        this.addRenderableWidget(this.searchField);
 
-        this.searchButton = ButtonWidget.builder(Text.literal("Search"), button -> {
-            performSearch(this.searchField.getText());
-        }).dimensions(x + 125, y + 20, 50, 20).build();
-        this.addDrawableChild(this.searchButton);
+        this.searchButton = Button.builder(Component.literal("Search"), button -> {
+            performSearch(this.searchField.getValue());
+        }).bounds(x + 125, y + 20, 50, 20).build();
+        this.addRenderableWidget(this.searchButton);
     }
 
     private void performSearch(String query) {
@@ -58,7 +59,7 @@ public class WikiBookScreen extends Screen {
     }
 
     @Override
-    public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+    public void render(GuiGraphics context, int mouseX, int mouseY, float delta) {
         super.renderBackground(context, mouseX, mouseY, delta);
 
         int bookWidth = 192;
@@ -66,22 +67,22 @@ public class WikiBookScreen extends Screen {
         int x = (this.width - bookWidth) / 2;
         int y = (this.height - bookHeight) / 2;
 
-        context.drawTexture(BOOK_TEXTURE, x, y, 0, 0, bookWidth, bookHeight);
+        context.blit(BOOK_TEXTURE, x, y, 0, 0, bookWidth, bookHeight);
 
         super.render(context, mouseX, mouseY, delta);
 
         if (!this.currentPageText.isEmpty()) {
-            List<net.minecraft.text.OrderedText> lines = this.textRenderer.wrapLines(Text.literal(this.currentPageText), bookWidth - 40);
-            int textY = y + 50; // below the search bar
+            List<FormattedCharSequence> lines = this.font.split(Component.literal(this.currentPageText), bookWidth - 40);
+            int textY = y + 50; 
             for (int i = 0; i < lines.size(); i++) {
-                if (textY > y + bookHeight - 30 - (this.currentImageId != null ? 64 : 0)) break; // Don't overflow the page, leave space for image
-                context.drawText(this.textRenderer, lines.get(i), x + 20, textY, 0x000000, false);
-                textY += this.textRenderer.fontHeight;
+                if (textY > y + bookHeight - 30 - (this.currentImageId != null ? 64 : 0)) break; 
+                context.drawString(this.font, lines.get(i), x + 20, textY, 0x000000, false);
+                textY += this.font.lineHeight;
             }
         }
 
         if (this.currentImageId != null) {
-            context.drawTexture(this.currentImageId, x + (bookWidth - 64) / 2, y + bookHeight - 80, 0, 0, 64, 64, 64, 64);
+            context.blit(this.currentImageId, x + (bookWidth - 64) / 2, y + bookHeight - 80, 0, 0, 64, 64, 64, 64);
         }
     }
 }

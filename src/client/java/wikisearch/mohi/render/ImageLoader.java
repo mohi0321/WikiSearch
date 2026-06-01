@@ -1,9 +1,9 @@
 package wikisearch.mohi.render;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.texture.NativeImage;
-import net.minecraft.client.texture.NativeImageBackedTexture;
-import net.minecraft.util.Identifier;
+import com.mojang.blaze3d.platform.NativeImage;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.texture.DynamicTexture;
+import net.minecraft.resources.ResourceLocation;
 
 import java.io.InputStream;
 import java.net.URI;
@@ -15,7 +15,7 @@ import java.util.concurrent.CompletableFuture;
 public class ImageLoader {
     private static final HttpClient client = HttpClient.newHttpClient();
 
-    public static CompletableFuture<Identifier> loadImage(String urlStr) {
+    public static CompletableFuture<ResourceLocation> loadImage(String urlStr) {
         return CompletableFuture.supplyAsync(() -> {
             try {
                 HttpRequest req = HttpRequest.newBuilder().uri(URI.create(urlStr)).build();
@@ -28,11 +28,11 @@ public class ImageLoader {
             }
         }).thenApplyAsync(image -> {
             if (image == null) return null;
-            MinecraftClient mc = MinecraftClient.getInstance();
-            NativeImageBackedTexture texture = new NativeImageBackedTexture(image);
-            Identifier id = Identifier.of("wikisearch", "dynamic_image_" + System.currentTimeMillis());
-            mc.getTextureManager().registerTexture(id, texture);
+            Minecraft mc = Minecraft.getInstance();
+            DynamicTexture texture = new DynamicTexture(image);
+            ResourceLocation id = ResourceLocation.parse("wikisearch:dynamic_image_" + System.currentTimeMillis());
+            mc.getTextureManager().register(id, texture);
             return id;
-        }, MinecraftClient.getInstance()::executeTask);
+        }, Minecraft.getInstance()::execute);
     }
 }
